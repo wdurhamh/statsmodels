@@ -320,7 +320,6 @@ def summary_params(results, yname=None, xname=None, alpha=.05, use_t=True,
         header row is added.
     float_format : string
         float formatting options (e.g. ".3g")
-
     Returns
     -------
     params_table : SimpleTable instance
@@ -355,10 +354,15 @@ def summary_params(results, yname=None, xname=None, alpha=.05, use_t=True,
 
 
 # Vertical summary instance for multiple models
-def _col_params(result, float_format='%.4f', stars=True):
-    '''Stack coefficients and standard errors in single column
-    '''
+def _col_params(result, float_format='%.4f', stars=True, stat='std_err'):
+    '''Stack coefficients and selected statistic in single column
 
+    stat : 'p', 't', or None
+        Name of the value to be displayed in the summary column along with coefficients.
+        Defaults to std_err.
+        'p' will display p_values
+        't' displays 't' t_pvalues
+    '''
     # Extract parameters
     res = summary_params(result)
     # Format float
@@ -374,8 +378,20 @@ def _col_params(result, float_format='%.4f', stars=True):
         res.ix[idx, 0] = res.ix[idx, 0] + '*'
         idx = res.ix[:, 3] < .01
         res.ix[idx, 0] = res.ix[idx, 0] + '*'
-    # Stack Coefs and Std.Errors
-    res = res.ix[:, :2]
+    '''looks like speed is being traded for fragility.
+    If anymore modifications are made to this code, consider rewriting so that this function
+    is not as tightly coupled with summary_params methos (should not rely on blind indexing to retreive data)
+    res.ix[:,0] = Coefs,
+    res.ix[:,1] = std_err,
+    res.ix[:,0] = t,
+    res.ix[:,0] = p
+    '''
+    if stat == 't':
+        res = res.ix[:, [0,2]]
+    elif stat == 'p':
+        res = res.ix[:, [0,3]]
+    else:
+        res = res.ix[:, [0,1]]
     res = res.stack()
     res = pd.DataFrame(res)
     res.columns = [str(result.model.endog_names)]
@@ -417,7 +433,7 @@ def _make_unique(list_of_names):
 
 
 def summary_col(results, float_format='%.4f', model_names=[], stars=False,
-                info_dict=None, regressor_order=[]):
+                info_dict=None, regressor_order=[], stat=None):
     """
     Summarize multiple results instances side-by-side (coefs and SEs)
 
@@ -443,12 +459,16 @@ def summary_col(results, float_format='%.4f', model_names=[], stars=False,
     regressor_order : list of strings
         list of names of the regressors in the desired order. All regressors
         not specified will be appended to the end of the list.
+    stat : string ('p', 't') or None
+        Name of the value to be displayed in the summary column along with coefficients.
+        Defaults to std_err.
+        'p' will display p_values
+        't' displays 't' t_pvalues
     """
-
     if not isinstance(results, list):
         results = [results]
 
-    cols = [_col_params(x, stars=stars, float_format=float_format) for x in
+    cols = [_col_params(x, stars=stars, float_format=float_format, stat=stat) for x in
             results]
 
     # Unique column names (pandas has problems merging otherwise)
