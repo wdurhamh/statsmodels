@@ -1874,7 +1874,6 @@ class MLEResults(tsbase.TimeSeriesModelResults):
         """
         if start is None:
             start = 0
-
         # Handle start and end (e.g. dates)
         start = self.model._get_predict_start(start)
         end, out_of_sample = self.model._get_predict_end(end)
@@ -2236,6 +2235,7 @@ class MLEResultsWrapper(wrap.ResultsWrapper):
     }
     _wrap_attrs = wrap.union_dicts(tsbase.TimeSeriesResultsWrapper._wrap_attrs,
                                    _attrs)
+
     _methods = {
         'forecast': 'dates',
         'simulate': 'ynames',

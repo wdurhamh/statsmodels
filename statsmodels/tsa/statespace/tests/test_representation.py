@@ -1094,8 +1094,6 @@ def test_impulse_responses():
                                    cumulative=True)
     desired = np.cumsum(np.ones((11, 1)) * 2**0.5)[:, np.newaxis]
 
-    assert_allclose(actual, desired)
-
     # Random walk: 1-unit impulse response (i.e. non-orthogonalized irf) is 1
     # for all periods, even when intercepts are present
     mod = KalmanFilter(k_endog=1, k_states=1)
@@ -1148,7 +1146,6 @@ def test_impulse_responses():
 
     actual = mod.impulse_responses(steps=10, impulse=[0,1], orthogonalized=True)
     assert_allclose(actual, desired)
-
     # Univariate model with two correlated shocks
     mod = KalmanFilter(k_endog=1, k_states=2)
     mod['design', 0, 0:2] = 1.

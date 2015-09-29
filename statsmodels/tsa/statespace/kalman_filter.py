@@ -929,6 +929,7 @@ class KalmanFilter(Representation):
             impulse = np.array(impulse)
             if impulse.ndim > 1:
                 impulse = np.squeeze(impulse)
+
             if not impulse.shape == (self.k_posdef,):
                 raise ValueError('Invalid impulse vector. Must be shaped'
                                  ' (%d,)' % self.k_posdef)
