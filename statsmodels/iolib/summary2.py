@@ -357,19 +357,33 @@ def summary_params(results, yname=None, xname=None, alpha=.05, use_t=True,
 def _col_params(result, float_format='%.4f', stars=True, stat='std_err'):
     '''Stack coefficients and selected statistic in single column
 
-    stat : 'p', 't', or None
+    stat : 'p-value', 't-stat', or None
         Name of the value to be displayed in the summary column along with coefficients.
         Defaults to std_err.
-        'p' will display p_values
-        't' displays 't' t_pvalues
+        'p-value' displays p value
+        't-stat' displays t statistic
     '''
+    '''looks like speed is being traded for fragility.
+    If anymore modifications are made to this code, consider rewriting so that this function
+    is not as tightly coupled with summary_params methos (should not rely on blind indexing to retreive data)
+    index 0 = Coefs,
+    1 = std_err,
+    2 = t-stat,
+    3 = p-value
+    '''
+    # Decide which statistic to use and get that statistic's index
+    stat_index = 1;
+    if stat =='t-stat':
+        stat_index = 2
+    elif stat == 'p-value':
+        stat_index = 3
     # Extract parameters
     res = summary_params(result)
     # Format float
-    for col in res.columns[:2]:
+    for col in res.columns[[0,stat_index]]:
         res[col] = res[col].apply(lambda x: float_format % x)
-    # Std.Errors in parentheses
-    res.ix[:, 1] = '(' + res.ix[:, 1] + ')'
+    # Add parens around selected statistic
+    res.ix[:, stat_index] = '(' + res.ix[:, stat_index] + ')'    
     # Significance stars
     if stars:
         idx = res.ix[:, 3] < .1
@@ -378,20 +392,9 @@ def _col_params(result, float_format='%.4f', stars=True, stat='std_err'):
         res.ix[idx, 0] = res.ix[idx, 0] + '*'
         idx = res.ix[:, 3] < .01
         res.ix[idx, 0] = res.ix[idx, 0] + '*'
-    '''looks like speed is being traded for fragility.
-    If anymore modifications are made to this code, consider rewriting so that this function
-    is not as tightly coupled with summary_params methos (should not rely on blind indexing to retreive data)
-    res.ix[:,0] = Coefs,
-    res.ix[:,1] = std_err,
-    res.ix[:,0] = t,
-    res.ix[:,0] = p
-    '''
-    if stat == 't':
-        res = res.ix[:, [0,2]]
-    elif stat == 'p':
-        res = res.ix[:, [0,3]]
-    else:
-        res = res.ix[:, [0,1]]
+    
+   
+    res = res.ix[:, [0,stat_index]]
     res = res.stack()
     res = pd.DataFrame(res)
     res.columns = [str(result.model.endog_names)]
@@ -433,7 +436,7 @@ def _make_unique(list_of_names):
 
 
 def summary_col(results, float_format='%.4f', model_names=[], stars=False,
-                info_dict=None, regressor_order=[], stat=None):
+                info_dict=None, regressor_order=[], stat='std_err'):
     """
     Summarize multiple results instances side-by-side (coefs and SEs)
 
@@ -461,9 +464,9 @@ def summary_col(results, float_format='%.4f', model_names=[], stars=False,
         not specified will be appended to the end of the list.
     stat : string ('p', 't') or None
         Name of the value to be displayed in the summary column along with coefficients.
-        Defaults to std_err.
-        'p' will display p_values
-        't' displays 't' t_pvalues
+        Defaults to 'std_err'.
+        'p-value' will display p_values
+        't-stat' displays 't' t_pvalues
     """
     if not isinstance(results, list):
         results = [results]
