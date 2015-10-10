@@ -462,7 +462,7 @@ def summary_col(results, float_format='%.4f', model_names=[], stars=False,
     regressor_order : list of strings
         list of names of the regressors in the desired order. All regressors
         not specified will be appended to the end of the list.
-    stat : string ('p', 't') or None
+    stat : string ('p-value', 't-value') or None
         Name of the value to be displayed in the summary column along with coefficients.
         Defaults to 'std_err'.
         'p-value' will display p_values
@@ -522,7 +522,12 @@ def summary_col(results, float_format='%.4f', model_names=[], stars=False,
 
     smry = Summary()
     smry.add_df(summ, header=True, align='l')
-    smry.add_text('Standard errors in parentheses.')
+    stat_name = 'Standard errors'
+    if stat == 't-stat':
+        stat_name = 't-statistics'
+    elif stat == 'p-value':
+        stat_name = 'p-values'
+    smry.add_text(stat_name + ' in parentheses.')
     if stars:
         smry.add_text('* p<.1, ** p<.05, ***p<.01')
 
